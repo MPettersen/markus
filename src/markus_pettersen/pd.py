@@ -3,7 +3,7 @@ import sys
 import logging
 import pandas as pd
 
-from utils.general import camel_to_snake
+from markus_pettersen.general import camel_to_snake
 
 
 # Setup root logger
