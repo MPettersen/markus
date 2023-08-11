@@ -1,17 +1,18 @@
 import os
 import re
 import sys
+import string
 import logging
+import secrets
 import requests
 
 from typing import Any, Union
-from collections.abc import Iterable, Iterator
+from base64 import b64encode, b64decode
 from datetime import datetime, timedelta
+from collections.abc import Iterable, Iterator
 
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
-
-
 # Setup root logger
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -20,6 +21,27 @@ logging.basicConfig(
     level=LOG_LEVEL,
 )
 LOG = logging.getLogger(__name__)
+
+
+def check_env(env_key: str, default: str = ""):
+    env = os.environ.get(env_key, default)
+    if env == "":
+        raise Exception(f"Missing environment variable: {env_key}")
+    return env
+
+
+def password_generator(length: int = 12):
+    alphabet = string.ascii_letters + string.digits
+    password = ''.join(secrets.choice(alphabet) for _ in range(length))
+    return password
+
+
+def encode(s: str):
+    return b64encode(s.encode('utf-8')).decode('utf-8')
+
+
+def decode(s: str):
+    return b64decode(s).decode('utf-8')
 
 
 def camel_to_snake(s: str, upper: bool = True) -> str:
@@ -78,27 +100,3 @@ def paginate(url: str, headers: dict, data: list, skip: int = 0, take: int = 100
     else:
         data.extend(new)
         return paginate(url, headers, data, skip + 1)
-
-
-def token_request(
-    tenant_id: str,
-    client_id: str,
-    client_secret: str,
-    grant_type: str,
-    scopes: str
-) -> dict[str, Any]:
-    """
-    Get OAuth2 token from AAD.
-    Returns:
-        JSON response from AAD.
-    """
-    return requests.post(
-        f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token",
-        data={
-            "tenant": tenant_id,
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "grant_type": grant_type,
-            "scope": scopes,
-        }
-    ).json()
